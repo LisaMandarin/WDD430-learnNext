@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { db } from "@vercel/postgres";
+import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -13,7 +13,6 @@ const FormSchema = z.object({
   date: z.string(),
 });
 
-const client = await db.connect();
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
 
@@ -27,7 +26,7 @@ export async function createInvoice(formData: FormData) {
   const date = new Date().toISOString().split("T")[0];
 
   try {
-    await client.sql`
+    await sql`
           Insert INTO invoices (customer_id, amount, status, date)
           VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
       `;
@@ -49,7 +48,7 @@ export async function updateInvoice(id: string, formData: FormData) {
   const amountInCent = amount * 100;
 
   try {
-    await client.sql`
+    await sql`
       UPDATE invoices
       SET customer_id = ${customerId}, amount = ${amountInCent}, status = ${status}
       WHERE id = ${id}
@@ -63,7 +62,7 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 
 export async function deleteInvoice(id: string) {
-  await client.sql`
+  await sql`
         DELETE FROM invoices
         WHERE id = ${id}
     `;
